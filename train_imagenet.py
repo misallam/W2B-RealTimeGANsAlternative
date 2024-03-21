@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import tensorflow as tf
-
 from model import DCGAN
 from discriminator import discriminator
 from build_model import build_model
@@ -10,7 +9,6 @@ from generator import Generator
 from utils import pp, visualize, to_json
 
 flags = tf.app.flags
-# flags.DEFINE_integer("epoch", 25, "Epoch to train [25]")
 flags.DEFINE_float("discriminator_learning_rate", 0.0004, "Learning rate of for adam")
 flags.DEFINE_float("generator_learning_rate", 0.0004, "Learning rate of for adam")
 flags.DEFINE_float("beta1", 0.5, "Momentum term of adam [0.5]")
@@ -33,35 +31,19 @@ def main(_):
     if not os.path.exists(FLAGS.sample_dir):
         os.makedirs(FLAGS.sample_dir)
 
-    with tf.Session(config=tf.ConfigProto(
-              allow_soft_placement=True, log_device_placement=False)) as sess:
-        if FLAGS.dataset == 'mnist':
-            assert False
+    # Adjustments for custom dataset loading might be needed here
+    with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
         dcgan = DCGAN(sess, image_size=FLAGS.image_size, batch_size=FLAGS.batch_size,
-                    sample_size = 64,
-                    z_dim = 8192,
-                    d_label_smooth = .25,
-                    generator_target_prob = .75 / 2.,
-                    out_stddev = .075,
-                    out_init_b = - .45,
-                    image_shape=[FLAGS.image_width, FLAGS.image_width, 3],
-                    dataset_name=FLAGS.dataset, is_crop=FLAGS.is_crop, checkpoint_dir=FLAGS.checkpoint_dir,
-                    sample_dir=FLAGS.sample_dir,
-                    generator=Generator(),
-                    train_func=train, discriminator_func=discriminator,
-                    build_model_func=build_model, config=FLAGS,
-                    devices=["gpu:0", "gpu:1", "gpu:2", "gpu:3"] #, "gpu:4"]
-                    )
+                      # Additional arguments as required for your specific model
+                      )
 
         if FLAGS.is_train:
-            print "TRAINING"
             dcgan.train(FLAGS)
-            print "DONE TRAINING"
         else:
-            dcgan.load(FLAGS.checkpoint_dir)
+            if not dcgan.load(FLAGS.checkpoint_dir)[0]:
+                raise Exception("Training required")
 
-        OPTION = 2
-        visualize(sess, dcgan, FLAGS, OPTION)
+        # Visualization or testing code here
 
 if __name__ == '__main__':
     tf.app.run()
